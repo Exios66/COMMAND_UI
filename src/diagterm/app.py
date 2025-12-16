@@ -133,11 +133,11 @@ class DiagTermApp(App):
         services.add_columns("Service", "Active", "Description")
         services.cursor_type = "row"
 
-        self.set_interval(self.refresh_interval, self.refresh)
-        self.refresh()
+        self.set_interval(self.refresh_interval, self._update_display)
+        self._update_display()
 
     def action_refresh(self) -> None:
-        self.refresh()
+        self._update_display()
 
     def action_clear_log(self) -> None:
         self.query_one("#cmd_log", Log).clear()
@@ -189,7 +189,7 @@ class DiagTermApp(App):
         for r in rows:
             table.add_row(r.name, r.active, r.description)
 
-    def refresh(self) -> None:
+    def _update_display(self) -> None:
         self._set_summary()
         self._set_diagnostics()
         self._set_procs()
