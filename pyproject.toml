@@ -10,10 +10,13 @@ requires-python = ">=3.9"
 dependencies = [
   "psutil>=5.9.0,<6.0.0",
   "textual>=0.70.0,<1.0.0",
+  "fastapi>=0.110.0,<1.0.0",
+  "uvicorn[standard]>=0.29.0,<1.0.0",
 ]
 
 [project.scripts]
 diagterm = "diagterm.__main__:main"
+diagterm-web = "diagterm.web:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
