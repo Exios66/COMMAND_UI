@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "diagterm"
+version = "0.1.0"
+description = "Terminal UI for live system diagnostics + command runner"
+requires-python = ">=3.9"
+dependencies = [
+  "psutil>=5.9.0,<6.0.0",
+  "textual>=0.70.0,<1.0.0",
+]
+
+[project.scripts]
+diagterm = "diagterm.__main__:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
