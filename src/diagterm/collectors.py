@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import platform
 import time
+from collections import deque
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -219,6 +220,240 @@ def _which(cmd: str) -> str | None:
     return None
 
 
+class DiagnosticsFeed:
+    """Incremental diagnostics feed from journalctl (preferred) or dmesg fallback.
+
+    This is stateful: it keeps a rolling buffer and uses journal cursors (or a
+    dmesg tail diff) to return only new lines between polls.
+    """
+
+    def __init__(self, limit: int = 120) -> None:
+        self.limit = max(1, int(limit))
+        self._buffer: deque[str] = deque(maxlen=self.limit)
+
+        self._backend: str | None = None  # "journal" | "dmesg"
+        self._journalctl = _which("journalctl")
+        self._dmesg = _which("dmesg")
+
+        self._cursor: str | None = None
+        self._journal_tail: str | None = None
+        self._dmesg_tail: str | None = None
+
+    def snapshot(self) -> list[str]:
+        """Return the current buffer, oldest-first."""
+        return list(self._buffer)
+
+    def poll(self) -> tuple[list[str], bool]:
+        """Poll for new diagnostics.
+
+        Returns (lines, reset_required). If reset_required is True, `lines`
+        contains a full snapshot to display (e.g., initial fill or backend
+        switch). Otherwise, `lines` contains only new entries to append.
+        """
+        if self._backend is None:
+            if self._journalctl is not None:
+                self._backend = "journal"
+            elif self._dmesg is not None:
+                self._backend = "dmesg"
+            else:
+                return ([], True)
+
+        if self._backend == "journal" and self._journalctl is not None:
+            lines, reset = self._poll_journalctl()
+            if lines or reset:
+                return (lines, reset)
+            # If journal is empty, keep using it; caller can keep prior view.
+            return ([], False)
+
+        if self._backend == "dmesg" and self._dmesg is not None:
+            return self._poll_dmesg(force_reset=False)
+
+        # Tool disappeared or was never available; force a reset to empty.
+        self._buffer.clear()
+        self._backend = None
+        self._cursor = None
+        self._dmesg_tail = None
+        return ([], True)
+
+    def _extract_cursor(self, raw_lines: list[str]) -> str | None:
+        for ln in reversed(raw_lines):
+            if ln.startswith("-- cursor:"):
+                v = ln.split(":", 1)[1].strip()
+                return v or None
+        return None
+
+    def _filter_journal_lines(self, raw_lines: list[str]) -> list[str]:
+        out: list[str] = []
+        for ln in raw_lines:
+            ln = ln.rstrip()
+            if not ln:
+                continue
+            if ln == "-- No entries --":
+                continue
+            if ln.startswith("-- cursor:"):
+                continue
+            out.append(ln)
+        return out
+
+    def _poll_journalctl(self) -> tuple[list[str], bool]:
+        import subprocess
+
+        # `-p 0..4` => emerg..warning (includes errors).
+        argv: list[str] = [
+            self._journalctl or "journalctl",
+            "--no-pager",
+            "--output",
+            "short-iso",
+            "-p",
+            "0..4",
+            "--show-cursor",
+        ]
+
+        reset_required = False
+        if self._cursor:
+            argv += ["--after-cursor", self._cursor]
+        else:
+            argv += ["-n", str(self.limit)]
+            # If we don't have a cursor (or it's unsupported), avoid treating
+            # every poll as a full reset. We'll diff by the last seen line.
+            reset_required = len(self._buffer) == 0
+
+        try:
+            out = subprocess.check_output(
+                argv,
+                stderr=subprocess.STDOUT,
+                text=True,
+                timeout=1.5,
+            )
+        except Exception:
+            # Fall back to dmesg if available; otherwise surface empty reset.
+            if self._dmesg is not None:
+                self._backend = "dmesg"
+                self._cursor = None
+                return self._poll_dmesg(force_reset=True)
+            self._buffer.clear()
+            self._cursor = None
+            return ([], True)
+
+        raw_lines = out.splitlines()
+        cursor = self._extract_cursor(raw_lines)
+        if cursor:
+            self._cursor = cursor
+
+        lines = self._filter_journal_lines(raw_lines)
+
+        if reset_required:
+            self._buffer.clear()
+            for ln in lines[-self.limit :]:
+                self._buffer.append(ln)
+            self._journal_tail = self._buffer[-1] if self._buffer else None
+            return (self.snapshot(), True)
+
+        if self._cursor:
+            # Incremental update: append only new lines returned by after-cursor.
+            new_lines = lines
+            for ln in new_lines:
+                self._buffer.append(ln)
+            if new_lines:
+                self._journal_tail = self._buffer[-1] if self._buffer else None
+            return (new_lines, False)
+
+        # Cursor unavailable (common when there are no matching entries or older
+        # setups). Fall back to tail diff similar to dmesg.
+        if self._journal_tail is None:
+            self._buffer.clear()
+            for ln in lines[-self.limit :]:
+                self._buffer.append(ln)
+            self._journal_tail = self._buffer[-1] if self._buffer else None
+            return (self.snapshot(), True)
+
+        last = self._journal_tail
+        last_idx: int | None = None
+        for i in range(len(lines) - 1, -1, -1):
+            if lines[i] == last:
+                last_idx = i
+                break
+        if last_idx is None:
+            self._buffer.clear()
+            for ln in lines[-self.limit :]:
+                self._buffer.append(ln)
+            self._journal_tail = self._buffer[-1] if self._buffer else None
+            return (self.snapshot(), True)
+
+        new_lines = lines[last_idx + 1 :]
+        for ln in new_lines:
+            self._buffer.append(ln)
+        self._journal_tail = self._buffer[-1] if self._buffer else None
+        return (new_lines, False)
+
+    def _poll_dmesg(self, force_reset: bool) -> tuple[list[str], bool]:
+        import subprocess
+
+        if self._dmesg is None:
+            self._buffer.clear()
+            self._dmesg_tail = None
+            return ([], True)
+
+        candidates: list[list[str]] = [
+            [self._dmesg, "--color=never", "--level=err,warn", "--ctime"],
+            [self._dmesg, "--color=never", "--level=err,warn"],
+            [self._dmesg, "--level=err,warn", "--ctime"],
+            [self._dmesg, "--level=err,warn"],
+            [self._dmesg, "--ctime"],
+            [self._dmesg],
+        ]
+
+        out: str | None = None
+        for argv in candidates:
+            try:
+                out = subprocess.check_output(
+                    argv,
+                    stderr=subprocess.STDOUT,
+                    text=True,
+                    timeout=1.5,
+                )
+                break
+            except Exception:
+                continue
+
+        if out is None:
+            self._buffer.clear()
+            self._dmesg_tail = None
+            return ([], True)
+
+        all_lines = [ln.rstrip() for ln in out.splitlines() if ln.strip()]
+        tail = all_lines[-self.limit :]
+
+        if force_reset or self._dmesg_tail is None:
+            self._buffer.clear()
+            for ln in tail:
+                self._buffer.append(ln)
+            self._dmesg_tail = tail[-1] if tail else None
+            return (self.snapshot(), True)
+
+        # Find the last previously-seen line and return everything after it.
+        last = self._dmesg_tail
+        last_idx: int | None = None
+        for i in range(len(all_lines) - 1, -1, -1):
+            if all_lines[i] == last:
+                last_idx = i
+                break
+
+        if last_idx is None:
+            # Lost sync (ring buffer wrapped or output format changed).
+            self._buffer.clear()
+            for ln in tail:
+                self._buffer.append(ln)
+            self._dmesg_tail = tail[-1] if tail else None
+            return (self.snapshot(), True)
+
+        new_lines = all_lines[last_idx + 1 :]
+        for ln in new_lines:
+            self._buffer.append(ln)
+        self._dmesg_tail = self._buffer[-1] if self._buffer else None
+        return (new_lines, False)
+
+
 def get_running_services(limit: int = 25) -> list[ServiceRow]:
     """Best-effort 'background operations' via systemd services."""
     systemctl = _which("systemctl")
@@ -264,58 +499,9 @@ def get_recent_diagnostics(limit: int = 120) -> list[str]:
     Prefers systemd journal when available; falls back to dmesg.
     Returns newest-last lines (chronological display).
     """
-    import subprocess
-
-    limit = max(1, int(limit))
-
-    journalctl = _which("journalctl")
-    if journalctl is not None:
-        try:
-            out = subprocess.check_output(
-                [
-                    journalctl,
-                    "--no-pager",
-                    "--output",
-                    "short-iso",
-                    "-p",
-                    "0..4",  # emerg..warning
-                    "-n",
-                    str(limit),
-                ],
-                stderr=subprocess.STDOUT,
-                text=True,
-                timeout=2.0,
-            )
-            lines = [ln.rstrip() for ln in out.splitlines() if ln.strip()]
-            return lines[-limit:]
-        except Exception:
-            pass
-
-    dmesg = _which("dmesg")
-    if dmesg is None:
-        return []
-
-    # Try a few common dmesg flag variants across distros.
-    candidates: list[list[str]] = [
-        [dmesg, "--color=never", "--level=err,warn", "--ctime"],
-        [dmesg, "--color=never", "--level=err,warn"],
-        [dmesg, "--ctime"],
-        [dmesg],
-    ]
-    for argv in candidates:
-        try:
-            out = subprocess.check_output(
-                argv,
-                stderr=subprocess.STDOUT,
-                text=True,
-                timeout=2.0,
-            )
-            lines = [ln.rstrip() for ln in out.splitlines() if ln.strip()]
-            return lines[-limit:]
-        except Exception:
-            continue
-
-    return []
+    feed = DiagnosticsFeed(limit=limit)
+    lines, _reset = feed.poll()
+    return lines[-max(1, int(limit)) :]
 
 
 def format_bytes(n: int) -> str:

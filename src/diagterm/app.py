@@ -9,10 +9,10 @@ from textual.screen import ModalScreen
 from textual.widgets import Button, DataTable, Footer, Header, Input, Log, Static
 
 from diagterm.collectors import (
+    DiagnosticsFeed,
     PowerReader,
     format_bytes,
     format_uptime,
-    get_recent_diagnostics,
     get_running_services,
     get_system_summary,
     get_top_processes,
@@ -95,8 +95,9 @@ class DiagTermApp(App):
         super().__init__()
         self.refresh_interval = max(0.5, float(refresh_interval))
         self.power = PowerReader()
+        self.diag_feed = DiagnosticsFeed(limit=200)
         self._busy = False
-        self._last_diag_text: str | None = None
+        self._diag_initialized = False
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
@@ -195,14 +196,24 @@ class DiagTermApp(App):
         self._set_services()
 
     def _set_diagnostics(self) -> None:
-        lines = get_recent_diagnostics(limit=120)
-        text = "\n".join(lines) if lines else "(no recent warnings/errors found, or journal/dmesg unavailable)"
-        if text == self._last_diag_text:
-            return
-        self._last_diag_text = text
         log = self.query_one("#diag_log", Log)
-        log.clear()
-        log.write(text)
+        lines, reset_required = self.diag_feed.poll()
+
+        if reset_required or not self._diag_initialized:
+            self._diag_initialized = True
+            log.clear()
+            snap = lines if reset_required else self.diag_feed.snapshot()
+            if not snap:
+                log.write("(no recent warnings/errors found, or journal/dmesg unavailable)")
+                return
+            log.write("\n".join(snap))
+            return
+
+        if not lines:
+            return
+
+        for ln in lines:
+            log.write_line(ln)
 
     @on(Button.Pressed, "#run_btn")
     async def _run_pressed(self) -> None:
