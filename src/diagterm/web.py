@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 import os
+from pathlib import Path
 from dataclasses import asdict
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from diagterm.collectors import (
@@ -32,13 +35,26 @@ app.add_middleware(
         "http://127.0.0.1:5173",
     ],
     allow_credentials=False,
-    allow_methods=["*"] ,
+    allow_methods=["*"],
     allow_headers=["*"],
 )
 
 _power = PowerReader()
 
+# Determine web directory path (works from both installed package and development)
+# Try docs/ first (new location), then web/ (legacy), then alternative paths
+_web_dir = Path(__file__).parent.parent.parent / "docs"
+if not _web_dir.exists():
+    _web_dir = Path(__file__).parent.parent.parent / "web"
+if not _web_dir.exists():
+    # Try alternative path for installed package
+    _web_dir = Path(__file__).parent.parent.parent.parent / "docs"
+if not _web_dir.exists():
+    _web_dir = Path(__file__).parent.parent.parent.parent / "web"
+_dist_dir = _web_dir / "dist"
 
+
+# API Routes (must be defined before static file routes)
 @app.get("/api/summary")
 def api_summary() -> dict:
     return asdict(get_system_summary(_power))
@@ -84,6 +100,110 @@ async def api_run(req: RunRequest) -> dict:
         "stdout": res.stdout,
         "stderr": res.stderr,
     }
+
+
+# Static file serving and SPA routing
+if _dist_dir.exists() and (_dist_dir / "index.html").exists():
+    # Serve static assets (JS, CSS, etc.)
+    if (_dist_dir / "assets").exists():
+        app.mount("/assets", StaticFiles(directory=str(_dist_dir / "assets")), name="assets")
+    
+    # Serve root index.html
+    @app.get("/")
+    async def root():
+        index_path = _dist_dir / "index.html"
+        with open(index_path, "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read())
+    
+    # Serve other static files from dist root (favicons, manifest, etc.)
+    @app.get("/{filename}")
+    async def serve_static(filename: str, request: Request):
+        # Don't interfere with API routes
+        if filename.startswith("api"):
+            raise HTTPException(status_code=404, detail="Not Found")
+        
+        filepath = _dist_dir / filename
+        if filepath.exists() and filepath.is_file():
+            return FileResponse(str(filepath))
+        
+        # For SPA routing, serve index.html for any non-API, non-file route
+        index_path = _dist_dir / "index.html"
+        if index_path.exists():
+            with open(index_path, "r", encoding="utf-8") as f:
+                return HTMLResponse(content=f.read())
+        
+        raise HTTPException(status_code=404, detail="Not Found")
+else:
+    # If dist doesn't exist, provide helpful error message
+    @app.get("/")
+    async def root():
+        return HTMLResponse(
+            content=f"""
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>DiagTerm Web - Frontend Not Built</title>
+                <style>
+                    body {{
+                        font-family: system-ui, sans-serif;
+                        max-width: 600px;
+                        margin: 50px auto;
+                        padding: 20px;
+                        background: #0b1220;
+                        color: #e6ecff;
+                    }}
+                    h1 {{ color: #7aa2ff; }}
+                    code {{
+                        background: #111a2e;
+                        padding: 2px 6px;
+                        border-radius: 3px;
+                        color: #a8b3d6;
+                    }}
+                    .box {{
+                        background: #111a2e;
+                        border: 1px solid #24304f;
+                        padding: 20px;
+                        border-radius: 8px;
+                        margin-top: 20px;
+                    }}
+                    pre {{
+                        background: #111a2e;
+                        padding: 12px;
+                        border-radius: 4px;
+                        overflow-x: auto;
+                    }}
+                </style>
+            </head>
+            <body>
+                <h1>Frontend Not Built</h1>
+                <div class="box">
+                    <p>The React frontend has not been built yet.</p>
+                    <p>To build it, run:</p>
+                    <pre><code>cd web
+npm install
+npm run build</code></pre>
+                    <p>Or for development with hot reload:</p>
+                    <pre><code>cd web
+npm install
+npm run dev</code></pre>
+                    <p><small>Expected directory: <code>{_dist_dir}</code></small></p>
+                </div>
+                <div class="box">
+                    <h2>API Endpoints</h2>
+                    <p>The API is available at:</p>
+                    <ul>
+                        <li><code>GET /api/summary</code> - System summary</li>
+                        <li><code>GET /api/processes?limit=25</code> - Top processes</li>
+                        <li><code>GET /api/services?limit=25</code> - Running services</li>
+                        <li><code>GET /api/diagnostics?limit=120</code> - Diagnostics feed</li>
+                        <li><code>POST /api/run</code> - Run command (requires DIAGTERM_WEB_ENABLE_RUNNER=1)</li>
+                    </ul>
+                </div>
+            </body>
+            </html>
+            """,
+            status_code=503
+        )
 
 
 def main() -> None:
