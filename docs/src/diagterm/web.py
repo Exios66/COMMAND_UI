@@ -41,17 +41,37 @@ app.add_middleware(
 
 _power = PowerReader()
 
-# Determine web directory path (works from both installed package and development)
-# Try docs/ first (new location), then web/ (legacy), then alternative paths
-_web_dir = Path(__file__).parent.parent.parent / "docs"
-if not _web_dir.exists():
-    _web_dir = Path(__file__).parent.parent.parent / "web"
-if not _web_dir.exists():
-    # Try alternative path for installed package
-    _web_dir = Path(__file__).parent.parent.parent.parent / "docs"
-if not _web_dir.exists():
-    _web_dir = Path(__file__).parent.parent.parent.parent / "web"
-_dist_dir = _web_dir / "dist"
+
+def _find_site_dir() -> Path:
+    """Find the static site directory containing dist/index.html.
+
+    Supports these layouts:
+    - repo-root/docs/dist (preferred)
+    - repo-root/web/dist (legacy)
+    - package located at docs/src/diagterm or src/diagterm
+    """
+    here = Path(__file__).resolve()
+
+    # Walk up a few levels and probe common locations.
+    for p in list(here.parents)[:8]:
+        # If we're inside docs/ already
+        if (p / "dist" / "index.html").exists():
+            return p
+        # Typical repo root
+        if (p / "docs" / "dist" / "index.html").exists():
+            return p / "docs"
+        if (p / "web" / "dist" / "index.html").exists():
+            return p / "web"
+
+    # Fallback: default to repo-root/docs even if dist doesn't exist yet
+    for p in list(here.parents)[:8]:
+        if (p / "docs").exists():
+            return p / "docs"
+    return here.parent
+
+
+_site_dir = _find_site_dir()
+_dist_dir = _site_dir / "dist"
 
 
 # API Routes (must be defined before static file routes)
@@ -179,11 +199,11 @@ else:
                 <div class="box">
                     <p>The React frontend has not been built yet.</p>
                     <p>To build it, run:</p>
-                    <pre><code>cd web
+                    <pre><code>cd docs
 npm install
 npm run build</code></pre>
                     <p>Or for development with hot reload:</p>
-                    <pre><code>cd web
+                    <pre><code>cd docs
 npm install
 npm run dev</code></pre>
                     <p><small>Expected directory: <code>{_dist_dir}</code></small></p>
