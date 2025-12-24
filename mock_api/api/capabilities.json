@@ -1,0 +1,6 @@
+{
+    "version": "0.1.0",
+    "runner_enabled": false,
+    "diagnostics_enabled": true,
+    "services_enabled": true
+}

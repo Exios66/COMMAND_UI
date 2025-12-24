@@ -1,0 +1,31 @@
+{
+    "processes": [
+        {
+            "pid": 1234,
+            "name": "mock_process_1",
+            "user": "root",
+            "cpu": 15.2,
+            "mem": 2.1,
+            "read_b": 1024,
+            "write_b": 2048
+        },
+        {
+            "pid": 5678,
+            "name": "chrome",
+            "user": "user",
+            "cpu": 5.5,
+            "mem": 8.4,
+            "read_b": 0,
+            "write_b": 100
+        },
+        {
+            "pid": 9012,
+            "name": "python",
+            "user": "user",
+            "cpu": 1.2,
+            "mem": 3.5,
+            "read_b": 512,
+            "write_b": 0
+        }
+    ]
+}

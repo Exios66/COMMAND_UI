@@ -1,0 +1,19 @@
+{
+    "services": [
+        {
+            "name": "ssh.service",
+            "description": "OpenBSD Secure Shell server",
+            "active": "active"
+        },
+        {
+            "name": "docker.service",
+            "description": "Docker Application Container Engine",
+            "active": "active"
+        },
+        {
+            "name": "cron.service",
+            "description": "Regular background program processing daemon",
+            "active": "active"
+        }
+    ]
+}

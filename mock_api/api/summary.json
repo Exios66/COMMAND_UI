@@ -1,0 +1,20 @@
+{
+    "hostname": "github-pages-demo",
+    "platform": "Linux (Static Mock)",
+    "kernel": "5.15.0-mock",
+    "uptime_s": 12345,
+    "loadavg": [0.5, 0.3, 0.1],
+    "cpu_percent": 12.5,
+    "cpu_freq_mhz": 2400,
+    "mem_total": 16777216000,
+    "mem_used": 8388608000,
+    "mem_available": 8388608000,
+    "swap_total": 4294967296,
+    "swap_used": 1073741824,
+    "disk_total": 512000000000,
+    "disk_used": 256000000000,
+    "disk_free": 256000000000,
+    "net_sent": 1024000,
+    "net_recv": 2048000,
+    "package_power_w": 15.5
+}

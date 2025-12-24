@@ -1,0 +1,1383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DiagTerm Web - Static API Interface</title>
+    <style>
+        :root {
+            color-scheme: dark;
+            --bg: #0b1220;
+            --panel: #111a2e;
+            --border: #24304f;
+            --text: #e6ecff;
+            --muted: #a8b3d6;
+            --accent: #7aa2ff;
+            --accent-dim: #5a82df;
+            --bad: #ff6b6b;
+            --warning: #ffb347;
+            --success: #6bff8e;
+        }
+
+        html, body {
+            margin: 0;
+            height: 100%;
+            background: var(--bg);
+            color: var(--text);
+            font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        .wrap {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 16px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .sub {
+            color: var(--muted);
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .status-dot.connected {
+            background: var(--success);
+            box-shadow: 0 0 8px var(--success);
+        }
+
+        .status-dot.disconnected {
+            background: var(--bad);
+        }
+
+        /* Buttons */
+        .btn {
+            background: var(--accent);
+            color: var(--bg);
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s;
+            font-size: 0.875rem;
+        }
+
+        .btn:hover { 
+            opacity: 0.85;
+            transform: translateY(-1px);
+        }
+
+        .btn:disabled { 
+            opacity: 0.5; 
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: var(--bg);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--accent);
+            border: 1px solid var(--accent);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(122, 162, 255, 0.1);
+        }
+
+        .btn-warning {
+            background: var(--warning);
+            color: var(--bg);
+        }
+
+        .btn-full {
+            width: 100%;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .cardTitle {
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 8px 16px;
+        }
+
+        .cols {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        @media (max-width: 800px) {
+            .cols { grid-template-columns: 1fr; }
+        }
+
+        /* Tables */
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
+        }
+
+        .table th, .table td {
+            text-align: left;
+            padding: 6px 8px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .table th { 
+            color: var(--muted); 
+            font-weight: 500; 
+        }
+
+        /* Typography */
+        .mono { 
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; 
+        }
+
+        .muted { 
+            color: var(--muted); 
+        }
+
+        .hint {
+            font-size: 0.75rem;
+            color: var(--muted);
+            margin-top: 4px;
+            display: block;
+        }
+
+        /* Log/Code blocks */
+        .log {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 8px;
+            max-height: 180px;
+            overflow: auto;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 0.75rem;
+            white-space: pre-wrap;
+            word-break: break-all;
+            margin: 0;
+        }
+
+        .code-block {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 8px 12px;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 0.8rem;
+            margin: 8px 0;
+            overflow-x: auto;
+        }
+
+        /* Alerts */
+        .alert {
+            background: rgba(255, 107, 107, 0.15);
+            border: 1px solid var(--bad);
+            color: var(--bad);
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 16px;
+        }
+
+        .warning-box {
+            background: rgba(255, 179, 71, 0.15);
+            border: 1px solid var(--warning);
+            color: var(--warning);
+            padding: 12px;
+            border-radius: 6px;
+            margin: 12px 0;
+        }
+
+        /* Form elements */
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            color: var(--text);
+        }
+
+        .input {
+            width: 100%;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 10px 12px;
+            color: var(--text);
+            font-size: 0.875rem;
+            transition: border-color 0.15s;
+        }
+
+        .input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .input::placeholder { 
+            color: var(--muted); 
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            margin: 12px 0;
+            padding: 8px;
+            background: rgba(255, 179, 71, 0.1);
+            border-radius: 6px;
+        }
+
+        .checkbox-label input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--accent);
+        }
+
+        /* Runner */
+        .runner {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .runner .input {
+            flex: 1;
+        }
+
+        .runOut {
+            margin-top: 12px;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            color: var(--muted);
+            font-size: 0.75rem;
+            padding: 16px 0;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(11, 18, 32, 0.95);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            z-index: 1000;
+            -webkit-backdrop-filter: blur(4px); /* Support for Safari */
+            backdrop-filter: blur(4px);
+        }
+
+        .modal {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            max-width: 520px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            animation: modalIn 0.2s ease-out;
+        }
+
+        @keyframes modalIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95) translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            font-size: 1.25rem;
+            color: var(--text);
+        }
+
+        .modal-body {
+            padding: 24px;
+        }
+
+        .modal-description {
+            color: var(--muted);
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .modal-actions .btn {
+            flex: 1;
+        }
+
+        /* Divider */
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 20px 0;
+            color: var(--muted);
+            font-size: 0.75rem;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        .divider span {
+            padding: 0 12px;
+        }
+
+        /* Instructions */
+        .instructions {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 16px;
+        }
+
+        .instructions h4 {
+            margin: 0 0 12px 0;
+            color: var(--accent);
+            font-size: 0.9rem;
+        }
+
+        .instructions ol,
+        .instructions ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .instructions li {
+            margin-bottom: 12px;
+            line-height: 1.5;
+        }
+
+        .instructions small {
+            display: block;
+            color: var(--muted);
+            margin-top: 4px;
+        }
+
+        .instructions small.warning {
+            color: var(--warning);
+        }
+
+        /* Permission styles */
+        .permission-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .permission-badge.low {
+            background: rgba(107, 255, 142, 0.15);
+            color: var(--success);
+            border: 1px solid var(--success);
+        }
+
+        .permission-badge.high {
+            background: rgba(255, 179, 71, 0.15);
+            color: var(--warning);
+            border: 1px solid var(--warning);
+        }
+
+        .permission-details {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            margin: 16px 0;
+        }
+
+        .permission-details h4 {
+            margin: 0 0 12px 0;
+            color: var(--muted);
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .permission-details ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .permission-details li {
+            margin-bottom: 6px;
+            color: var(--text);
+        }
+
+        /* Permission badges in header */
+        .permission-badges {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .badge.granted {
+            background: rgba(107, 255, 142, 0.15);
+            color: var(--success);
+            border: 1px solid rgba(107, 255, 142, 0.3);
+        }
+
+        .badge.pending {
+            background: rgba(168, 179, 214, 0.1);
+            color: var(--muted);
+            border: 1px solid var(--border);
+        }
+
+        .badge-inline {
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin-left: 8px;
+        }
+
+        .badge-inline.warning {
+            background: rgba(255, 179, 71, 0.15);
+            color: var(--warning);
+        }
+
+        /* Permission request card */
+        .permission-request-card {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            max-width: 500px;
+            margin: 40px auto;
+        }
+
+        .permission-icon {
+            font-size: 3rem;
+            margin-bottom: 16px;
+        }
+
+        .permission-request-card h2 {
+            margin: 0 0 12px 0;
+            color: var(--text);
+        }
+
+        .permission-request-card p {
+            color: var(--muted);
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .permission-request-card .btn {
+            margin-bottom: 16px;
+        }
+
+        /* Permission inline request */
+        .permission-inline {
+            background: rgba(255, 179, 71, 0.1);
+            border: 1px solid rgba(255, 179, 71, 0.3);
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .permission-inline p {
+            margin: 0 0 12px 0;
+            color: var(--muted);
+        }
+
+        /* Utility classes */
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- Connecting State (Initial) -->
+        <div id="view-connection" class="hidden">
+            <div class="modal-overlay">
+                <div class="modal">
+                    <div class="modal-header">
+                        <h2>🔌 Connect to DiagTerm Backend</h2>
+                    </div>
+                    <div class="modal-body">
+                        <p class="modal-description">
+                            DiagTerm Web needs to connect to a backend server to monitor your system.
+                        </p>
+                        <div class="form-group">
+                            <label htmlFor="backend-url">Backend URL</label>
+                            <input id="input-backend-url" type="text" class="input" placeholder="http://127.0.0.1:8765">
+                            <small class="hint">Default: https://exios66.github.io/gui-api/</small>
+                        </div>
+                        <label class="checkbox-label">
+                            <input id="input-static-mode" type="checkbox">
+                            Static Backend Mode (for GitHub Pages)
+                        </label>
+                        <div id="connection-error" class="alert hidden"></div>
+                        <button id="btn-connect" class="btn btn-primary btn-full">Connect to Backend</button>
+                        
+                        <div class="divider"><span>Need help?</span></div>
+                        
+                        <button id="btn-toggle-instructions" class="btn btn-secondary btn-full">Show Setup Instructions</button>
+                        
+                        <div id="setup-instructions" class="instructions hidden">
+                            <h4>How to start the backend:</h4>
+                            <ol>
+                                <li><strong>Install DiagTerm:</strong> <pre class="code-block">pip install diagterm</pre></li>
+                                <li><strong>Start the web server:</strong> <pre class="code-block">diagterm-web</pre></li>
+                                <li><strong>Optional - Enable command runner:</strong> <pre class="code-block">DIAGTERM_WEB_ENABLE_RUNNER=1 diagterm-web</pre></li>
+                            </ol>
+                            <h4>Security Notes:</h4>
+                            <ul>
+                                <li>The backend only listens on localhost (127.0.0.1) by default</li>
+                                <li>No data is sent to external servers</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Permission Request View -->
+        <div id="view-permission-request" class="hidden">
+            <div class="wrap">
+                <header class="header">
+                    <div>
+                        <div class="title">DiagTerm Web</div>
+                        <div class="sub" id="perm-header-sub"></div>
+                    </div>
+                    <button id="btn-disconnect-perm" class="btn btn-secondary">Disconnect</button>
+                </header>
+                <div class="permission-request-card">
+                    <div class="permission-icon">🔍</div>
+                    <h2>System Access Required</h2>
+                    <p>
+                        To monitor your system, DiagTerm needs permission to read system information.
+                        This includes CPU, memory, disk, and process data.
+                    </p>
+                    <button id="btn-grant-readonly" class="btn btn-primary">Grant Read Access</button>
+                    <p class="hint">All data stays local (or within the connected API). Nothing is sent to external servers.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard View -->
+        <div id="view-dashboard" class="hidden">
+            <div class="wrap">
+                <header class="header">
+                    <div>
+                        <div class="title">DiagTerm Web</div>
+                        <div class="sub">
+                            <span class="status-dot connected"></span>
+                            Connected to <span id="dash-connected-url" class="mono" style="margin-left:6px;"></span>
+                        </div>
+                    </div>
+                    <div class="header-actions">
+                        <button id="btn-refresh" class="btn">Refresh</button>
+                        <button id="btn-disconnect-dash" class="btn btn-secondary">Disconnect</button>
+                    </div>
+                </header>
+
+                <div class="permission-badges">
+                    <span class="badge granted">✓ Read Access</span>
+                    <span id="badge-execute" class="badge"></span>
+                </div>
+
+                <div id="dashboard-error" class="alert hidden"></div>
+
+                <section class="card">
+                    <div class="cardTitle">System</div>
+                    <div id="system-summary" class="grid">
+                        <div class="muted">Loading…</div>
+                    </div>
+                </section>
+
+                <section class="cols">
+                    <div class="card">
+                        <div class="cardTitle">Diagnostics feed (warnings/errors)</div>
+                        <pre id="log-diagnostics" class="log">(none / unavailable)</pre>
+                    </div>
+                    <div class="card">
+                        <div class="cardTitle">High CPU ("power")</div>
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>PID</th>
+                                    <th>Name</th>
+                                    <th>User</th>
+                                    <th>CPU%</th>
+                                    <th>MEM%</th>
+                                </tr>
+                            </thead>
+                            <tbody id="table-high-cpu"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section class="cols">
+                    <div class="card">
+                        <div class="cardTitle">Top processes</div>
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>PID</th>
+                                    <th>Name</th>
+                                    <th>User</th>
+                                    <th>CPU%</th>
+                                    <th>MEM%</th>
+                                    <th>IO R</th>
+                                    <th>IO W</th>
+                                </tr>
+                            </thead>
+                            <tbody id="table-processes"></tbody>
+                        </table>
+                    </div>
+                    <div class="card">
+                        <div class="cardTitle">Running services (background operations)</div>
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Service</th>
+                                    <th>Active</th>
+                                    <th>Description</th>
+                                </tr>
+                            </thead>
+                            <tbody id="table-services"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section class="card">
+                    <div class="cardTitle">
+                        Command runner
+                        <span id="runner-warning-badge" class="badge-inline warning hidden">Requires permission</span>
+                    </div>
+
+                    <div id="runner-locked" class="permission-inline hidden">
+                        <p>Command execution requires additional permission. This allows running shell commands on the system.</p>
+                        <button id="btn-request-execute" class="btn btn-warning">🔓 Request Execute Permission</button>
+                    </div>
+
+                    <div id="runner-unlocked" class="hidden">
+                        <div class="muted">⚠️ Commands run with user permissions. Be careful what you execute.</div>
+                        <div class="runner">
+                            <input id="input-cmd" class="input" placeholder="Example: df -h && free -h">
+                            <button id="btn-run-cmd" class="btn">Run</button>
+                        </div>
+                        <div id="run-error" class="alert hidden"></div>
+                        <div id="run-output" class="runOut hidden"></div>
+                    </div>
+                </section>
+
+                <footer class="footer">
+                    Polling every 1s. Backend: <span id="footer-url" class="mono"></span>
+                </footer>
+            </div>
+        </div>
+
+        <!-- Permission Modal (Generic) -->
+        <div id="modal-permission" class="modal-overlay hidden">
+            <div class="modal">
+                <div class="modal-header">
+                    <h2>🔐 Permission Request</h2>
+                </div>
+                <div class="modal-body">
+                    <div id="perm-modal-badge" class="permission-badge"></div>
+                    <h3 id="perm-modal-title"></h3>
+                    <p id="perm-modal-desc" class="modal-description"></p>
+                    <div class="permission-details">
+                        <h4>This permission allows:</h4>
+                        <ul id="perm-modal-details"></ul>
+                    </div>
+                    <div id="perm-modal-warning" class="warning-box hidden"></div>
+                    
+                    <label id="perm-modal-checkbox-label" class="checkbox-label hidden">
+                        <input id="perm-modal-checkbox" type="checkbox">
+                        I understand the risks and want to proceed
+                    </label>
+
+                    <div class="modal-actions">
+                        <button id="btn-perm-deny" class="btn btn-secondary">Deny</button>
+                        <button id="btn-perm-grant" class="btn btn-primary">Grant Permission</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Constants & Config ---
+        const DEFAULT_BACKEND = "https://exios66.github.io/gui-api/";
+        const REFRESH_MS = 1000;
+        
+        const PERMISSION_INFO = {
+            readonly: {
+                name: "Read System Information",
+                description: "View CPU, memory, disk, and network statistics",
+                details: [
+                    "Read CPU usage and frequency",
+                    "Read memory and swap usage",
+                    "Read disk space information",
+                    "Read network transfer statistics",
+                    "View running processes (name, CPU%, memory%)",
+                    "View system services status",
+                ],
+                risk: "low",
+            },
+            execute: {
+                name: "Execute Commands",
+                description: "Run shell commands on your system",
+                details: [
+                    "Execute arbitrary shell commands",
+                    "Read command output (stdout/stderr)",
+                    "Commands run with your user permissions",
+                ],
+                risk: "high",
+                warning: "Only grant this permission if you trust the commands you will run. Commands execute with your user's full permissions.",
+            },
+        };
+
+        // --- State ---
+        let state = {
+            status: "disconnected", // disconnected, connecting, connected, error
+            backendUrl: DEFAULT_BACKEND,
+            isStatic: false,
+            capabilities: null,
+            grantedPermissions: [],
+            error: null,
+            
+            // Dashboard Data
+            summary: null,
+            processes: [],
+            services: [],
+            diag: [],
+            dashError: null,
+            
+            // Runner
+            running: false,
+            runOut: null,
+            runErr: null,
+
+            // Pending permission request
+            pendingPermission: null,
+        };
+
+        let pollInterval = null;
+
+        // --- DOM Elements ---
+        const els = {
+            viewConnection: document.getElementById('view-connection'),
+            viewPermissionRequest: document.getElementById('view-permission-request'),
+            viewDashboard: document.getElementById('view-dashboard'),
+            
+            inputBackendUrl: document.getElementById('input-backend-url'),
+            inputStaticMode: document.getElementById('input-static-mode'),
+            btnConnect: document.getElementById('btn-connect'),
+            connectionError: document.getElementById('connection-error'),
+            btnToggleInstructions: document.getElementById('btn-toggle-instructions'),
+            setupInstructions: document.getElementById('setup-instructions'),
+            
+            permHeaderSub: document.getElementById('perm-header-sub'),
+            btnDisconnectPerm: document.getElementById('btn-disconnect-perm'),
+            btnGrantReadonly: document.getElementById('btn-grant-readonly'),
+            
+            dashConnectedUrl: document.getElementById('dash-connected-url'),
+            btnRefresh: document.getElementById('btn-refresh'),
+            btnDisconnectDash: document.getElementById('btn-disconnect-dash'),
+            badgeExecute: document.getElementById('badge-execute'),
+            dashboardError: document.getElementById('dashboard-error'),
+            
+            systemSummary: document.getElementById('system-summary'),
+            logDiagnostics: document.getElementById('log-diagnostics'),
+            tableHighCpu: document.getElementById('table-high-cpu'),
+            tableProcesses: document.getElementById('table-processes'),
+            tableServices: document.getElementById('table-services'),
+            
+            runnerWarningBadge: document.getElementById('runner-warning-badge'),
+            runnerLocked: document.getElementById('runner-locked'),
+            runnerUnlocked: document.getElementById('runner-unlocked'),
+            btnRequestExecute: document.getElementById('btn-request-execute'),
+            inputCmd: document.getElementById('input-cmd'),
+            btnRunCmd: document.getElementById('btn-run-cmd'),
+            runError: document.getElementById('run-error'),
+            runOutput: document.getElementById('run-output'),
+            
+            footerUrl: document.getElementById('footer-url'),
+            
+            modalPermission: document.getElementById('modal-permission'),
+            permModalBadge: document.getElementById('perm-modal-badge'),
+            permModalTitle: document.getElementById('perm-modal-title'),
+            permModalDesc: document.getElementById('perm-modal-desc'),
+            permModalDetails: document.getElementById('perm-modal-details'),
+            permModalWarning: document.getElementById('perm-modal-warning'),
+            permModalCheckboxLabel: document.getElementById('perm-modal-checkbox-label'),
+            permModalCheckbox: document.getElementById('perm-modal-checkbox'),
+            btnPermDeny: document.getElementById('btn-perm-deny'),
+            btnPermGrant: document.getElementById('btn-perm-grant'),
+        };
+
+        // --- API Helpers ---
+        function formatBytes(n) {
+            const units = ["B", "KB", "MB", "GB", "TB", "PB"];
+            let v = n;
+            let i = 0;
+            while (v >= 1024 && i < units.length - 1) {
+                v /= 1024;
+                i++;
+            }
+            if (i === 0) return `${Math.floor(v)}${units[i]}`;
+            return `${v.toFixed(1)}${units[i]}`;
+        }
+
+        function formatUptime(seconds) {
+            seconds = Math.max(0, Math.floor(seconds));
+            const s = seconds % 60;
+            const m0 = Math.floor(seconds / 60);
+            const m = m0 % 60;
+            const h0 = Math.floor(m0 / 60);
+            const h = h0 % 24;
+            const d = Math.floor(h0 / 24);
+            const pad = (x) => x.toString().padStart(2, "0");
+            if (d > 0) return `${d}d ${pad(h)}:${pad(m)}:${pad(s)}`;
+            return `${pad(h)}:${pad(m)}:${pad(s)}`;
+        }
+
+        async function getJson(path) {
+            let url = path.startsWith("http") ? path : `${state.backendUrl}${path}`;
+            if (state.isStatic) {
+                // Remove query params for static files
+                url = url.split('?')[0]; 
+                if (!url.endsWith(".json")) url += ".json";
+            }
+            const res = await fetch(url);
+            if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+            return await res.json();
+        }
+
+        const api = {
+            testConnection: async (url, isStatic) => {
+                try {
+                    // Adjust URL for static mode
+                    const capPath = isStatic ? "/api/capabilities.json" : "/api/capabilities";
+                    const sumPath = isStatic ? "/api/summary.json" : "/api/summary";
+                    
+                    // Try capabilities first
+                    const res = await fetch(`${url}${capPath}`, {
+                        method: "GET",
+                        signal: AbortSignal.timeout(5000),
+                    });
+                    if (res.ok) return await res.json();
+                    
+                    // Fallback to summary
+                    const summaryRes = await fetch(`${url}${sumPath}`, {
+                        method: "GET",
+                        signal: AbortSignal.timeout(5000),
+                    });
+                    if (summaryRes.ok) {
+                        return {
+                            version: "unknown",
+                            runner_enabled: false,
+                            diagnostics_enabled: true,
+                            services_enabled: true,
+                        };
+                    }
+                    throw new Error("Backend not responding");
+                } catch (e) {
+                    if (e.name === "TimeoutError") {
+                        throw new Error("Connection timeout - is the backend running?");
+                    }
+                    throw e;
+                }
+            },
+            summary: () => getJson("/api/summary"),
+            processes: (limit = 25) => getJson(`/api/processes?limit=${limit}`),
+            services: (limit = 25) => getJson(`/api/services?limit=${limit}`),
+            diagnostics: (limit = 120) => getJson(`/api/diagnostics?limit=${limit}`),
+            run: async (cmd) => {
+                const res = await fetch(`${state.backendUrl}/api/run`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ cmd, timeout_s: 120 }),
+                });
+                const body = await res.json().catch(() => ({}));
+                if (!res.ok) {
+                    const msg = (body && body.detail) || `${res.status} ${res.statusText}`;
+                    throw new Error(msg);
+                }
+                return body;
+            }
+        };
+
+        // --- Logic & UI Updates ---
+
+        function init() {
+            // Load saved connection
+            const saved = localStorage.getItem("diagterm_connection");
+            if (saved) {
+                try {
+                    const { backendUrl, permissions, isStatic } = JSON.parse(saved);
+                    if (backendUrl) {
+                        state.backendUrl = backendUrl;
+                        state.isStatic = !!isStatic;
+                        els.inputBackendUrl.value = backendUrl;
+                        els.inputStaticMode.checked = !!isStatic;
+                        handleConnect(backendUrl, !!isStatic, permissions || []);
+                    } else {
+                        render();
+                    }
+                } catch {
+                    render();
+                }
+            } else {
+                els.inputBackendUrl.value = DEFAULT_BACKEND;
+                // Default to static if github.io
+                if (DEFAULT_BACKEND.includes("github.io")) {
+                    els.inputStaticMode.checked = true;
+                }
+                render();
+            }
+
+            // Event Listeners
+            els.btnConnect.addEventListener('click', () => {
+                handleConnect(els.inputBackendUrl.value, els.inputStaticMode.checked);
+            });
+            els.btnToggleInstructions.addEventListener('click', () => {
+                els.setupInstructions.classList.toggle('hidden');
+                els.btnToggleInstructions.textContent = els.setupInstructions.classList.contains('hidden') 
+                    ? "Show Setup Instructions" : "Hide Setup Instructions";
+            });
+            
+            els.btnDisconnectPerm.addEventListener('click', handleDisconnect);
+            els.btnDisconnectDash.addEventListener('click', handleDisconnect);
+            els.btnGrantReadonly.addEventListener('click', () => requestPermission('readonly'));
+            
+            els.btnRefresh.addEventListener('click', refreshData);
+            els.btnRequestExecute.addEventListener('click', () => requestPermission('execute'));
+            
+            els.btnPermDeny.addEventListener('click', () => {
+                state.pendingPermission = null;
+                render();
+            });
+            els.btnPermGrant.addEventListener('click', grantPendingPermission);
+            
+            els.btnRunCmd.addEventListener('click', runCommand);
+            els.inputCmd.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') runCommand();
+            });
+        }
+
+        async function handleConnect(url, isStatic, savedPermissions = []) {
+            url = url.replace(/\/$/, ""); // Remove trailing slash
+            state.status = "connecting";
+            state.backendUrl = url;
+            state.isStatic = isStatic;
+            state.error = null;
+            render();
+
+            try {
+                const capabilities = await api.testConnection(url, isStatic);
+                state.status = "connected";
+                state.capabilities = capabilities;
+                state.grantedPermissions = savedPermissions;
+                
+                localStorage.setItem("diagterm_connection", JSON.stringify({ 
+                    backendUrl: url, 
+                    isStatic: isStatic,
+                    permissions: savedPermissions 
+                }));
+                
+                if (state.grantedPermissions.includes("readonly")) {
+                    startPolling();
+                }
+            } catch (e) {
+                state.status = "error";
+                state.error = e.message;
+            }
+            render();
+        }
+
+        function handleDisconnect() {
+            stopPolling();
+            localStorage.removeItem("diagterm_connection");
+            state = {
+                ...state,
+                status: "disconnected",
+                backendUrl: DEFAULT_BACKEND,
+                capabilities: null,
+                grantedPermissions: [],
+                error: null,
+                summary: null,
+                processes: [],
+                services: [],
+                diag: [],
+            };
+            els.inputBackendUrl.value = DEFAULT_BACKEND;
+            render();
+        }
+
+        function requestPermission(perm) {
+            state.pendingPermission = perm;
+            render();
+        }
+
+        function grantPendingPermission() {
+            if (!state.pendingPermission) return;
+            
+            // Check checkbox for high risk
+            const info = PERMISSION_INFO[state.pendingPermission];
+            if (info.risk === 'high' && !els.permModalCheckbox.checked) return;
+
+            const newPermissions = [...new Set([...state.grantedPermissions, state.pendingPermission])];
+            state.grantedPermissions = newPermissions;
+            state.pendingPermission = null;
+
+            localStorage.setItem("diagterm_connection", JSON.stringify({ 
+                backendUrl: state.backendUrl, 
+                isStatic: state.isStatic,
+                permissions: newPermissions 
+            }));
+
+            if (newPermissions.includes("readonly") && !pollInterval) {
+                startPolling();
+            }
+            render();
+        }
+
+        function startPolling() {
+            refreshData();
+            if (pollInterval) clearInterval(pollInterval);
+            pollInterval = setInterval(refreshData, REFRESH_MS);
+        }
+
+        function stopPolling() {
+            if (pollInterval) {
+                clearInterval(pollInterval);
+                pollInterval = null;
+            }
+        }
+
+        async function refreshData() {
+            if (!state.grantedPermissions.includes("readonly")) return;
+            
+            try {
+                const [s, p, sv, d] = await Promise.all([
+                    api.summary(),
+                    api.processes(25),
+                    api.services(25),
+                    api.diagnostics(160),
+                ]);
+                state.summary = s;
+                state.processes = p.processes;
+                state.services = sv.services;
+                state.diag = d.lines;
+                state.dashError = null;
+            } catch (e) {
+                state.dashError = e.message;
+            }
+            renderDashboardData();
+        }
+
+        async function runCommand() {
+            if (state.isStatic) {
+                alert("Command execution is not available in Static Backend Mode.");
+                return;
+            }
+
+            if (!state.grantedPermissions.includes("execute")) {
+                requestPermission("execute");
+                return;
+            }
+            
+            const cmd = els.inputCmd.value.trim();
+            if (!cmd) return;
+            if (!confirm(`Run this command?\n\n${cmd}`)) return;
+
+            state.running = true;
+            state.runErr = null;
+            state.runOut = null;
+            renderRunner();
+
+            try {
+                const res = await api.run(cmd);
+                state.runOut = res;
+                els.inputCmd.value = "";
+            } catch (e) {
+                state.runErr = e.message;
+            } finally {
+                state.running = false;
+                renderRunner();
+            }
+        }
+
+        // --- Render Functions ---
+
+        function render() {
+            // Views
+            const isConnected = state.status === "connected";
+            const hasRead = state.grantedPermissions.includes("readonly");
+            
+            els.viewConnection.classList.toggle("hidden", isConnected);
+            els.viewPermissionRequest.classList.toggle("hidden", !isConnected || hasRead);
+            els.viewDashboard.classList.toggle("hidden", !isConnected || !hasRead);
+            
+            // Connection View
+            if (state.status === "error") {
+                els.connectionError.textContent = `Connection failed: ${state.error}`;
+                els.connectionError.classList.remove("hidden");
+            } else {
+                els.connectionError.classList.add("hidden");
+            }
+            els.btnConnect.textContent = state.status === "connecting" ? "Connecting..." : "Connect to Backend";
+            els.btnConnect.disabled = state.status === "connecting";
+
+            // Permission Request View
+            if (isConnected && !hasRead) {
+                els.permHeaderSub.textContent = `Connected to ${state.backendUrl}`;
+            }
+
+            // Dashboard View
+            if (isConnected && hasRead) {
+                els.dashConnectedUrl.textContent = state.backendUrl + (state.isStatic ? " (Static)" : "");
+                els.footerUrl.textContent = state.backendUrl;
+                
+                // Execute Badge
+                const hasExec = state.grantedPermissions.includes("execute");
+                if (hasExec) {
+                    els.badgeExecute.className = "badge granted";
+                    els.badgeExecute.textContent = "✓ Execute Access";
+                } else {
+                    els.badgeExecute.className = "badge pending";
+                    els.badgeExecute.textContent = "○ Execute Access (not granted)";
+                }
+
+                // Runner State
+                els.runnerWarningBadge.classList.toggle("hidden", hasExec);
+                els.runnerLocked.classList.toggle("hidden", hasExec);
+                els.runnerUnlocked.classList.toggle("hidden", !hasExec);
+                
+                // Dashboard Error
+                if (state.dashError) {
+                    els.dashboardError.textContent = `API error: ${state.dashError}`;
+                    els.dashboardError.classList.remove("hidden");
+                } else {
+                    els.dashboardError.classList.add("hidden");
+                }
+                
+                renderDashboardData();
+                renderRunner();
+            }
+
+            // Permission Modal
+            if (state.pendingPermission) {
+                const info = PERMISSION_INFO[state.pendingPermission];
+                els.modalPermission.classList.remove("hidden");
+                els.permModalTitle.textContent = info.name;
+                els.permModalDesc.textContent = info.description;
+                
+                els.permModalBadge.textContent = info.risk === "high" ? "⚠️ High Risk" : "ℹ️ Low Risk";
+                els.permModalBadge.className = `permission-badge ${info.risk === "high" ? "high" : "low"}`;
+                
+                els.permModalDetails.innerHTML = info.details.map(d => `<li>${d}</li>`).join("");
+                
+                if (info.risk === "high") {
+                    els.permModalWarning.innerHTML = `<strong>⚠️ Warning:</strong> ${info.warning}`;
+                    els.permModalWarning.classList.remove("hidden");
+                    els.permModalCheckboxLabel.classList.remove("hidden");
+                    els.permModalCheckbox.checked = false;
+                    els.btnPermGrant.disabled = true;
+                    
+                    els.permModalCheckbox.onchange = (e) => {
+                        els.btnPermGrant.disabled = !e.target.checked;
+                    };
+                } else {
+                    els.permModalWarning.classList.add("hidden");
+                    els.permModalCheckboxLabel.classList.add("hidden");
+                    els.btnPermGrant.disabled = false;
+                }
+            } else {
+                els.modalPermission.classList.add("hidden");
+            }
+        }
+
+        function renderDashboardData() {
+            if (!state.summary) return;
+
+            // System Summary
+            const s = state.summary;
+            els.systemSummary.innerHTML = `
+                <div><b>Host</b>: ${s.hostname}</div>
+                <div><b>OS</b>: ${s.platform}</div>
+                <div><b>Uptime</b>: ${formatUptime(s.uptime_s)}</div>
+                <div><b>Load</b>: ${s.loadavg ? s.loadavg.map(x => x.toFixed(2)).join(" ") : "N/A"}</div>
+                <div><b>CPU</b>: ${s.cpu_percent.toFixed(1)}% ${s.cpu_freq_mhz ? `@ ${s.cpu_freq_mhz.toFixed(0)}MHz` : ""}</div>
+                <div><b>Package power</b>: ${s.package_power_w == null ? "N/A" : `${s.package_power_w.toFixed(1)} W`}</div>
+                <div><b>RAM</b>: ${formatBytes(s.mem_used)} / ${formatBytes(s.mem_total)} (avail ${formatBytes(s.mem_available)})</div>
+                <div><b>Swap</b>: ${formatBytes(s.swap_used)} / ${formatBytes(s.swap_total)}</div>
+                <div><b>Disk(/)</b>: ${formatBytes(s.disk_used)} / ${formatBytes(s.disk_total)} (free ${formatBytes(s.disk_free)})</div>
+                <div><b>Net</b>: ↑ ${formatBytes(s.net_sent)} | ↓ ${formatBytes(s.net_recv)}</div>
+            `;
+
+            // Diagnostics
+            els.logDiagnostics.textContent = state.diag.length ? state.diag.join("\n") : "(none / unavailable)";
+
+            // High CPU
+            const highPower = state.processes.filter(p => p.cpu >= 25).slice(0, 10);
+            if (highPower.length) {
+                els.tableHighCpu.innerHTML = highPower.map(p => `
+                    <tr>
+                        <td>${p.pid}</td>
+                        <td class="mono">${p.name}</td>
+                        <td class="mono">${p.user || ""}</td>
+                        <td>${p.cpu.toFixed(1)}</td>
+                        <td>${p.mem.toFixed(1)}</td>
+                    </tr>
+                `).join("");
+            } else {
+                els.tableHighCpu.innerHTML = `<tr><td colspan="5" class="muted">No high-CPU processes right now.</td></tr>`;
+            }
+
+            // Top Processes
+            els.tableProcesses.innerHTML = state.processes.map(p => `
+                <tr>
+                    <td>${p.pid}</td>
+                    <td class="mono">${p.name}</td>
+                    <td class="mono">${p.user || ""}</td>
+                    <td>${p.cpu.toFixed(1)}</td>
+                    <td>${p.mem.toFixed(1)}</td>
+                    <td class="mono">${p.read_b == null ? "" : formatBytes(p.read_b)}</td>
+                    <td class="mono">${p.write_b == null ? "" : formatBytes(p.write_b)}</td>
+                </tr>
+            `).join("");
+
+            // Services
+            if (state.services.length) {
+                els.tableServices.innerHTML = state.services.map(s => `
+                    <tr>
+                        <td class="mono">${s.name}</td>
+                        <td>${s.active}</td>
+                        <td>${s.description}</td>
+                    </tr>
+                `).join("");
+            } else {
+                els.tableServices.innerHTML = `<tr><td colspan="3" class="muted">(systemd unavailable)</td></tr>`;
+            }
+        }
+
+        function renderRunner() {
+            els.btnRunCmd.textContent = state.running ? "Running…" : "Run";
+            els.btnRunCmd.disabled = state.running;
+            
+            if (state.runErr) {
+                els.runError.textContent = `Run error: ${state.runErr}`;
+                els.runError.classList.remove("hidden");
+            } else {
+                els.runError.classList.add("hidden");
+            }
+
+            if (state.runOut) {
+                els.runOutput.innerHTML = `
+                    <div class="mono"><b>$</b> ${state.runOut.cmd}</div>
+                    <div class="muted">Exit code: ${state.runOut.returncode}</div>
+                    ${state.runOut.stdout ? `<div class="muted">stdout</div><pre class="log">${state.runOut.stdout}</pre>` : ""}
+                    ${state.runOut.stderr ? `<div class="muted">stderr</div><pre class="log">${state.runOut.stderr}</pre>` : ""}
+                `;
+                els.runOutput.classList.remove("hidden");
+            } else {
+                els.runOutput.classList.add("hidden");
+            }
+        }
+
+        // --- Start ---
+        init();
+
+    </script>
+</body>
+</html>

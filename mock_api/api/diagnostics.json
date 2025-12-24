@@ -1,0 +1,7 @@
+{
+    "lines": [
+        "2023-10-27 10:00:00 [INFO] System initialized (Mock Data)",
+        "2023-10-27 10:05:00 [WARN] High memory usage detected (simulated)",
+        "2023-10-27 10:10:00 [INFO] Service 'mock-service' started"
+    ]
+}
