@@ -75,6 +75,17 @@ _dist_dir = _site_dir / "dist"
 
 
 # API Routes (must be defined before static file routes)
+@app.get("/api/capabilities")
+def api_capabilities() -> dict:
+    """Return backend capabilities for permission management."""
+    return {
+        "version": "0.1.0",
+        "runner_enabled": os.environ.get("DIAGTERM_WEB_ENABLE_RUNNER", "0") == "1",
+        "diagnostics_enabled": True,
+        "services_enabled": True,
+    }
+
+
 @app.get("/api/summary")
 def api_summary() -> dict:
     return asdict(get_system_summary(_power))
