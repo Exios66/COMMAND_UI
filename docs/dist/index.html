@@ -3,7 +3,6 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <link rel="apple-touch-icon" href="./dist/apple-touch-icon.png" />
     
     <!-- Primary Meta Tags -->
     <title>DiagTerm Web - Live System Diagnostics & Command Runner</title>
@@ -34,12 +33,14 @@
     <!-- Theme Color -->
     <meta name="theme-color" content="#0b1220" />
     <meta name="msapplication-TileColor" content="#0b1220" />
-    <meta name="msapplication-config" content="./dist/browserconfig.xml" />
+    <meta name="msapplication-config" content="/browserconfig.xml" />
     
-    <!-- Favicon / PWA -->
-    <!-- NOTE: GitHub Pages is serving from /COMMAND_UI/, so we reference files under ./dist/ -->
-    <link rel="icon" type="image/svg+xml" href="./dist/favicon.svg" />
-    <link rel="manifest" href="./dist/site.webmanifest" />
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
     
     <!-- Preconnect for Performance -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -49,7 +50,10 @@
     <!-- Canonical URL -->
     <link rel="canonical" href="https://exios66.github.io/COMMAND_UI/" />
     
-    <!-- Referrer Policy (works via meta) -->
+    <!-- Security Headers -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+    <meta http-equiv="X-Frame-Options" content="DENY" />
+    <meta http-equiv="X-XSS-Protection" content="1; mode=block" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
     
     <!-- PWA -->
@@ -58,10 +62,8 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="DiagTerm Web" />
     
-    <!-- Production bundle (built by Vite into docs/dist) -->
-    <script type="module" crossorigin src="./dist/assets/index-CyAuNAE-.js"></script>
-    <link rel="modulepreload" crossorigin href="./dist/assets/vendor-wGySg1uH.js">
-    <link rel="stylesheet" crossorigin href="./dist/assets/index-CAMMDlxK.css">
+    <!-- Performance Hints -->
+    <link rel="preload" as="script" href="data:application/octet-stream;base64,aW1wb3J0IFJlYWN0IGZyb20gInJlYWN0IjsKaW1wb3J0IFJlYWN0RE9NIGZyb20gInJlYWN0LWRvbS9jbGllbnQiOwppbXBvcnQgeyBBcHAgfSBmcm9tICIuL0FwcCI7CmltcG9ydCAiLi9zdHlsZXMuY3NzIjsKClJlYWN0RE9NLmNyZWF0ZVJvb3QoZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoInJvb3QiKSEpLnJlbmRlcigKICA8UmVhY3QuU3RyaWN0TW9kZT4KICAgIDxBcHAgLz4KICA8L1JlYWN0LlN0cmljdE1vZGU+Cik7Cg==" />
     
     <!-- Structured Data (JSON-LD) -->
     <script type="application/ld+json">
@@ -109,6 +111,9 @@
         .noscript-message p { color: #a8b3d6; line-height: 1.6; }
       </style>
     </noscript>
+    <script type="module" crossorigin src="/assets/index-CyAuNAE-.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/vendor-wGySg1uH.js">
+    <link rel="stylesheet" crossorigin href="/assets/index-CAMMDlxK.css">
   </head>
   <body>
     <!-- No-JS Fallback -->
@@ -152,7 +157,7 @@
       </style>
     </div>
     
-    <!-- Main Application Script is loaded above from ./dist/assets/... -->
+    <!-- Main Application Script -->
     
     <!-- Error Boundary Script (runs if React fails to load) -->
     <script>

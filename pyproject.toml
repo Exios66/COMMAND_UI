@@ -19,7 +19,7 @@ diagterm = "diagterm.__main__:main"
 diagterm-web = "diagterm.web:main"
 
 [tool.setuptools]
-package-dir = {"" = "src"}
+package-dir = {"" = "docs/src"}
 
 [tool.setuptools.packages.find]
-where = ["src"]
+where = ["docs/src"]

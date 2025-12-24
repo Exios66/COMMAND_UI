@@ -40,6 +40,7 @@ diagterm
 ```
 
 Options:
+
 - `-r, --refresh INTERVAL`: Set refresh interval in seconds (default: 1.0)
 - `Ctrl+R`: Manual refresh
 - `Ctrl+L`: Clear command log
@@ -54,8 +55,9 @@ diagterm-web
 ```
 
 Then open your browser to:
-- **Local**: http://127.0.0.1:8765/
-- **GitHub Pages**: https://exios66.github.io/COMMAND_UI/
+
+- **Local**: <http://127.0.0.1:8765/>
+- **GitHub Pages**: <https://exios66.github.io/COMMAND_UI/>
 
 #### Environment Variables
 
@@ -127,6 +129,6 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## Links
 
-- **GitHub Repository**: https://github.com/Exios66/COMMAND_UI
-- **GitHub Pages**: https://exios66.github.io/COMMAND_UI/
-- **Issues**: https://github.com/Exios66/COMMAND_UI/issues
+- **GitHub Repository**: <https://github.com/Exios66/COMMAND_UI>
+- **GitHub Pages**: <https://exios66.github.io/COMMAND_UI/>
+- **Issues**: <https://github.com/Exios66/COMMAND_UI/issues>
