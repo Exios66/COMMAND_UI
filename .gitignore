@@ -10,4 +10,4 @@ build/
 web/node_modules/
 web/dist/
 docs/node_modules/
-docs/dist/
+# Note: docs/dist/ is NOT ignored - it's needed for GitHub Pages deployment
