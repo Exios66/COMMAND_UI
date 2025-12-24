@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    
+    <!-- Primary Meta Tags -->
+    <title>DiagTerm Web - Live System Diagnostics & Command Runner</title>
+    <meta name="title" content="DiagTerm Web - Live System Diagnostics & Command Runner" />
+    <meta name="description" content="Real-time system diagnostics dashboard with live process monitoring, service management, and secure command execution. Monitor CPU, memory, disk, network, and system health in real-time." />
+    <meta name="keywords" content="system diagnostics, process monitor, system monitoring, command runner, system health, CPU monitor, memory monitor, network monitor, systemd services, real-time diagnostics" />
+    <meta name="author" content="DiagTerm Team" />
+    <meta name="robots" content="index, follow" />
+    <meta name="language" content="English" />
+    <meta name="revisit-after" content="7 days" />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://exios66.github.io/COMMAND_UI/" />
+    <meta property="og:title" content="DiagTerm Web - Live System Diagnostics & Command Runner" />
+    <meta property="og:description" content="Real-time system diagnostics dashboard with live process monitoring, service management, and secure command execution." />
+    <meta property="og:image" content="https://exios66.github.io/COMMAND_UI/og-image.png" />
+    <meta property="og:site_name" content="DiagTerm Web" />
+    <meta property="og:locale" content="en_US" />
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="https://exios66.github.io/COMMAND_UI/" />
+    <meta name="twitter:title" content="DiagTerm Web - Live System Diagnostics & Command Runner" />
+    <meta name="twitter:description" content="Real-time system diagnostics dashboard with live process monitoring, service management, and secure command execution." />
+    <meta name="twitter:image" content="https://exios66.github.io/COMMAND_UI/og-image.png" />
+    
+    <!-- Theme Color -->
+    <meta name="theme-color" content="#0b1220" />
+    <meta name="msapplication-TileColor" content="#0b1220" />
+    <meta name="msapplication-config" content="./browserconfig.xml" />
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="./favicon-16x16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png" />
+    <link rel="manifest" href="./site.webmanifest" />
+    
+    <!-- Preconnect for Performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://exios66.github.io/COMMAND_UI/" />
+    
+    <!-- Security Headers -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+    <meta http-equiv="X-Frame-Options" content="DENY" />
+    <meta http-equiv="X-XSS-Protection" content="1; mode=block" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    
+    <!-- PWA -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="DiagTerm Web" />
+    
+    <!-- Performance Hints -->
+    <link rel="preload" as="script" href="./src/main.tsx" />
+    
+    <!-- Structured Data (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "DiagTerm Web",
+      "description": "Real-time system diagnostics dashboard with live process monitoring, service management, and secure command execution",
+      "url": "https://exios66.github.io/COMMAND_UI/",
+      "applicationCategory": "SystemUtility",
+      "operatingSystem": "Linux, macOS, Windows",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "author": {
+        "@type": "Organization",
+        "name": "DiagTerm Team"
+      },
+      "license": "https://opensource.org/licenses/MIT"
+    }
+    </script>
+    
+    <!-- Fallback for No-JS -->
+    <noscript>
+      <style>
+        body { 
+          display: flex; 
+          align-items: center; 
+          justify-content: center; 
+          min-height: 100vh; 
+          text-align: center; 
+          padding: 2rem;
+          font-family: system-ui, sans-serif;
+        }
+        .noscript-message {
+          max-width: 600px;
+          background: #111a2e;
+          padding: 2rem;
+          border-radius: 8px;
+          border: 1px solid #24304f;
+        }
+        .noscript-message h1 { margin-top: 0; color: #7aa2ff; }
+        .noscript-message p { color: #a8b3d6; line-height: 1.6; }
+      </style>
+    </noscript>
+  </head>
+  <body>
+    <!-- No-JS Fallback -->
+    <noscript>
+      <div class="noscript-message">
+        <h1>JavaScript Required</h1>
+        <p>DiagTerm Web requires JavaScript to function. Please enable JavaScript in your browser settings and refresh the page.</p>
+        <p><small>If you believe this is an error, please check your browser's console for more information.</small></p>
+      </div>
+    </noscript>
+    
+    <!-- React Root -->
+    <div id="root" role="main" aria-label="DiagTerm Web Application">
+      <!-- Loading fallback -->
+      <div style="
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        background: #0b1220;
+        color: #e6ecff;
+        font-family: system-ui, sans-serif;
+      ">
+        <div style="text-align: center;">
+          <div style="
+            width: 48px;
+            height: 48px;
+            border: 4px solid #24304f;
+            border-top-color: #7aa2ff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+          "></div>
+          <p style="color: #a8b3d6; margin: 0;">Loading DiagTerm Web...</p>
+        </div>
+      </div>
+      <style>
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+      </style>
+    </div>
+    
+    <!-- Main Application Script -->
+    <script type="module" src="/src/main.tsx"></script>
+    
+    <!-- Error Boundary Script (runs if React fails to load) -->
+    <script>
+      window.addEventListener('error', function(e) {
+        const root = document.getElementById('root');
+        if (root && !root.querySelector('.error-boundary')) {
+          root.innerHTML = '<div class="error-boundary" style="' +
+            'display: flex; align-items: center; justify-content: center; min-height: 100vh; ' +
+            'background: #0b1220; color: #ff6b6b; font-family: system-ui, sans-serif; padding: 2rem; text-align: center;' +
+            '"><div><h1 style="color: #ff6b6b; margin-top: 0;">Application Error</h1>' +
+            '<p style="color: #a8b3d6;">Failed to load the application. Please refresh the page or check your browser console.</p>' +
+            '<p style="color: #7aa2ff; font-size: 0.875rem; margin-top: 1rem;">Error: ' + (e.message || 'Unknown error') + '</p></div></div>';
+        }
+      });
+    </script>
+  </body>
+</html>
